@@ -1,8 +1,12 @@
+// app/page.tsx
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { HUBS } from '@/constants/hubs';
+import { calculateAiAnalytics } from '@/constants/aiHelper';
+import { AiAnalyticsCard } from '@/components/AiAnalyticsCard';
+import { Hub, AiAnalyticsResult } from '@/types/logistics';
 
 const Map = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -24,6 +28,25 @@ export default function Home() {
   const [trackNumber, setTrackNumber] = useState<string | null>(null);
 
   const animFrameRef = useRef<number | null>(null);
+
+  // Находим объекты выбранных хабов и приводим к интерфейсу Hub
+  const startHubObj = useMemo(() => {
+    const found = HUBS.find((h) => h.id === fromHub);
+    if (!found) return null;
+    return { id: found.id, name: found.name, lat: found.coords[0], lng: found.coords[1] } as Hub;
+  }, [fromHub]);
+
+  const endHubObj = useMemo(() => {
+    const found = HUBS.find((h) => h.id === toHub);
+    if (!found) return null;
+    return { id: found.id, name: found.name, lat: found.coords[0], lng: found.coords[1] } as Hub;
+  }, [toHub]);
+
+  // Расчет AI-аналитики для текущих выбранных хабов
+  const aiAnalytics: AiAnalyticsResult | null = useMemo(() => {
+    if (!startHubObj || !endHubObj || startHubObj.id === endHubObj.id) return null;
+    return calculateAiAnalytics(startHubObj, endHubObj);
+  }, [startHubObj, endHubObj]);
 
   const stopAnimation = useCallback(() => {
     if (animFrameRef.current !== null) {
@@ -116,20 +139,25 @@ export default function Home() {
       </header>
 
       <div className="flex flex-1 relative overflow-hidden">
-        <aside className="w-80 bg-slate-900 border-r border-slate-800 p-5 flex flex-col justify-between z-10">
+        {/* Боковая панель с шириной w-96 и скроллом для вмещения AI-карточки */}
+        <aside className="w-96 bg-slate-900 border-r border-slate-800 p-5 flex flex-col gap-5 z-10 overflow-y-auto">
           <div className="flex flex-col gap-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-purple-400">Управление</h2>
-            
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-purple-400">
+              Управление
+            </h2>
+
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Откуда</label>
                 <select
                   value={fromHub}
                   onChange={(e) => setFromHub(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white"
+                  className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-purple-500"
                 >
                   {HUBS.map((h) => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
+                    <option key={h.id} value={h.id}>
+                      {h.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -139,10 +167,12 @@ export default function Home() {
                 <select
                   value={toHub}
                   onChange={(e) => setToHub(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white"
+                  className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-purple-500"
                 >
                   {HUBS.map((h) => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
+                    <option key={h.id} value={h.id} disabled={h.id === fromHub}>
+                      {h.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -150,19 +180,22 @@ export default function Home() {
               <button
                 onClick={handleStartRoute}
                 disabled={status === 'loading'}
-                className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-medium py-2 rounded text-xs transition shadow-lg shadow-purple-600/20"
+                className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-medium py-2 rounded text-xs transition shadow-lg shadow-purple-600/20 cursor-pointer disabled:cursor-not-allowed"
               >
                 {status === 'loading' ? 'Загрузка...' : 'Запустить рейс'}
               </button>
             </div>
           </div>
 
-          {/* Виджет состояния перенесён в нижнюю часть боковой панели */}
+          {/* Интерактивный виджет AI-аналитики */}
+          <AiAnalyticsCard analytics={aiAnalytics} />
+
+          {/* Виджет состояния трекера */}
           <div className="bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl mt-auto">
             <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">
               Состояние трекера
             </div>
-            
+
             <div className="flex items-center gap-3 mb-2">
               <span className="relative flex h-3 w-3">
                 {status === 'in_transit' && (
