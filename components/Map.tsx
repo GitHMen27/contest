@@ -39,14 +39,11 @@ export default function Map({
       5,
     );
 
-    L.tileLayer(
-      "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
-      {
-        attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>',
-        maxZoom: 19,
-      },
-    ).addTo(map);
-
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(map);
     // Добавляем маркеры складов
     HUBS.forEach((hub) => {
       L.marker(hub.coords)
@@ -101,7 +98,8 @@ export default function Map({
 
     if (!truckMarkerRef.current) {
       const truckIcon = L.icon({
-        iconUrl: "https://img.icons8.ru/?size=100&id=BQjcRKZrKIEj&format=png&color=000000",
+        iconUrl:
+          "https://img.icons8.ru/?size=100&id=BQjcRKZrKIEj&format=png&color=000000",
         iconSize: [32, 32],
         iconAnchor: [16, 16],
         popupAnchor: [0, -16],

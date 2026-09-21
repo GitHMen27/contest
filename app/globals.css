@@ -32,3 +32,39 @@ body {
   height: 100%;
   background-color: #0f172a;
 }
+
+/* Базовый фильтр: снижен контраст, чтобы убрать ядовито-белые границы */
+.leaflet-container .leaflet-tile {
+  filter: brightness(0.7) invert(1) contrast(1.4) hue-rotate(200deg) saturate(0.3) !important;
+}
+
+/* Фон контейнера */
+.leaflet-container {
+  background: #090d16 !important;
+}
+
+/* Создаем контейнер под полупрозрачную «тёмную пелену» */
+.leaflet-tile-pane {
+  position: relative;
+}
+
+/* Тёмная пелена поверх слоя карт */
+.leaflet-tile-pane::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(9, 13, 22, 0.4); /* Мягкая тёмная вуаль */
+  pointer-events: none; /* Пропускает клики и зум к карте */
+  z-index: 1000;
+}
+
+/* Сохраняем яркими маркеры, всплывающие окна и линии маршрутов */
+.leaflet-marker-pane,
+.leaflet-overlay-pane,
+.leaflet-popup-pane {
+  z-index: 1001 !important;
+  filter: none !important;
+}
