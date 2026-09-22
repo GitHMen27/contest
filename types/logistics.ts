@@ -1,29 +1,27 @@
+// types/logistics.ts
 export interface Hub {
   id: string;
   name: string;
   lat: number;
   lng: number;
-}
-
-export interface RouteRisk {
-  type: 'weather' | 'traffic' | 'roadwork' | 'clear';
-  severity: 'low' | 'medium' | 'high';
-  message: string;
+  coords: [number, number];
 }
 
 export interface AiAnalyticsResult {
-  riskScore: number;          // Процент риска (0 - 100%)
-  estimatedHours: number;     // Время в пути
-  fuelConsumptionLitres: number; // Расход топлива в литрах
-  co2EmissionsKg: number;     // Выбросы CO2 в кг
-  recommendation: string;    // Текстовая рекомендация AI
-  activeRisks: RouteRisk[];   // Список предупреждений
+  distanceKm: number;
+  estimatedHours: number;
+  fuelCostRub: number;
+  riskFactor: 'Низкий' | 'Средний' | 'Высокий';
+  recommendedSpeedKmH: number;
 }
 
 export interface ActiveShipment {
   id: string;
-  fromHub: Hub;
-  toHub: Hub;
-  status: 'idle' | 'in_transit' | 'delivered';
-  analytics?: AiAnalyticsResult;
+  fromName: string;
+  toName: string;
+  isPriority: boolean;
+  statusText: string;
+  progress: number;
+  routeCoords: [number, number][]; // Координаты пути
+  currentPos: [number, number];   // Текущая точка на карте
 }

@@ -1,55 +1,46 @@
+// components/Map.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import { HUBS } from "@/constants/hubs";
+import { ActiveShipment } from "@/types/logistics";
 
 interface MapProps {
-  activeRoute: [number, number][] | null;
-  truckPosition: [number, number] | null;
-  trackNumber: string | null;
+  shipments: ActiveShipment[];
 }
 
-export default function Map({
-  activeRoute,
-  truckPosition,
-  trackNumber,
-}: MapProps) {
+export default function LogisticsMap({ shipments }: MapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const routeLineRef = useRef<L.Polyline | null>(null);
-  const truckMarkerRef = useRef<L.Marker | null>(null);
 
-  // 1. Единоразовая инициализация карты
+  // Теперь new Map() ссылается на встроенный JS Map без конфликта имен
+  const routesRef = useRef<Map<string, L.Polyline>>(new Map());
+  const trucksRef = useRef<Map<string, L.Marker>>(new Map());
+
+  // 1. Инициализация карты Leaflet
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-    // Настройка стандартных иконок
-    delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })
-      ._getIconUrl;
+    delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-      shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
     });
 
-    // Создаем экземпляр карты
-    const map = L.map(mapContainerRef.current).setView(
-      [55.751244, 37.618423],
-      5,
-    );
+    const map = L.map(mapContainerRef.current).setView([55.751244, 37.618423], 5);
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map);
-    // Добавляем маркеры складов
+
     HUBS.forEach((hub) => {
       L.marker(hub.coords)
         .addTo(map)
         .bindPopup(
-          `<div style="color: #0f172a; font-family: sans-serif;"><strong>${hub.name}</strong><br/>Сортировочный центр WB</div>`,
+          `<div style="color: #0f172a; font-family: sans-serif;"><strong>${hub.name}</strong><br/>Сортировочный центр WB</div>`
         );
     });
 
@@ -61,66 +52,77 @@ export default function Map({
     };
   }, []);
 
-  // 2. Прямое обновление маршрутной линии (без перерендера React)
+  // 2. Отрисовка и синхронизация активных рейсов
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    if (routeLineRef.current) {
-      map.removeLayer(routeLineRef.current);
-      routeLineRef.current = null;
-    }
+    const currentIds = new Set(shipments.map((s) => s.id));
 
-    if (activeRoute && activeRoute.length > 0) {
-      const line = L.polyline(activeRoute, {
-        color: "#c084fc",
-        weight: 4,
-        opacity: 0.8,
-      }).addTo(map);
-
-      routeLineRef.current = line;
-      map.fitBounds(line.getBounds(), { padding: [50, 50] });
-    }
-  }, [activeRoute]);
-
-  // 3. Прямая мутация маркера фуры (60 FPS без затрат React reconciliation)
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    if (!truckPosition) {
-      if (truckMarkerRef.current) {
-        map.removeLayer(truckMarkerRef.current);
-        truckMarkerRef.current = null;
+    // Очистка завершенных рейсов
+    routesRef.current.forEach((line, id) => {
+      if (!currentIds.has(id)) {
+        map.removeLayer(line);
+        routesRef.current.delete(id);
       }
-      return;
-    }
+    });
 
-    if (!truckMarkerRef.current) {
+    trucksRef.current.forEach((marker, id) => {
+      if (!currentIds.has(id)) {
+        map.removeLayer(marker);
+        trucksRef.current.delete(id);
+      }
+    });
+
+    // Добавление / обновление действующих рейсов
+    shipments.forEach((shipment) => {
+      const isPriority = shipment.isPriority;
+      const lineColor = isPriority ? "#f59e0b" : "#8b5cf6";
+
+      if (!routesRef.current.has(shipment.id) && shipment.routeCoords?.length) {
+        const line = L.polyline(shipment.routeCoords, {
+          color: lineColor,
+          weight: isPriority ? 5 : 3,
+          opacity: isPriority ? 0.9 : 0.6,
+          dashArray: isPriority ? "6, 6" : undefined,
+        }).addTo(map);
+
+        routesRef.current.set(shipment.id, line);
+
+        if (isPriority) {
+          map.fitBounds(line.getBounds(), { padding: [50, 50] });
+        }
+      }
+
       const truckIcon = L.icon({
-        iconUrl:
-          "https://img.icons8.ru/?size=100&id=BQjcRKZrKIEj&format=png&color=000000",
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -16],
+        iconUrl: isPriority
+          ? "https://img.icons8.ru/?size=100&id=BQjcRKZrKIEj&format=png&color=d97706"
+          : "https://img.icons8.ru/?size=100&id=BQjcRKZrKIEj&format=png&color=2563eb",
+        iconSize: isPriority ? [36, 36] : [28, 28],
+        iconAnchor: isPriority ? [18, 18] : [14, 14],
+        popupAnchor: [0, -14],
       });
 
-      truckMarkerRef.current = L.marker(truckPosition, {
-        icon: truckIcon,
-      }).addTo(map);
-    } else {
-      truckMarkerRef.current.setLatLng(truckPosition);
-    }
+      if (!trucksRef.current.has(shipment.id)) {
+        const marker = L.marker(shipment.currentPos, { icon: truckIcon }).addTo(map);
 
-    if (trackNumber) {
-      truckMarkerRef.current.bindPopup(
-        `<div style="color: #0f172a; font-family: sans-serif;">
-          <span style="background: #9333ea; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">В ПУТИ</span><br/>
-          <strong>Трек: ${trackNumber}</strong>
-        </div>`,
-      );
-    }
-  }, [truckPosition, trackNumber]);
+        marker.bindPopup(`
+          <div style="color: #0f172a; font-family: sans-serif;">
+            <span style="background: ${isPriority ? "#f59e0b" : "#2563eb"}; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+              ${isPriority ? "ПРИОРИТЕТ" : "В ПУТИ"}
+            </span><br/>
+            <strong>Трек: ${shipment.id}</strong><br/>
+            <small>${shipment.fromName} → ${shipment.toName}</small>
+          </div>
+        `);
+
+        trucksRef.current.set(shipment.id, marker);
+      } else {
+        const marker = trucksRef.current.get(shipment.id);
+        marker?.setLatLng(shipment.currentPos);
+      }
+    });
+  }, [shipments]);
 
   return <div ref={mapContainerRef} className="w-full h-full z-0" />;
 }
