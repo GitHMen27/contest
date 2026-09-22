@@ -7,14 +7,23 @@ export interface Hub {
   coords: [number, number];
 }
 
+export interface ActiveRisk {
+  type?: string; // Добавляем поле type (сделайте обязательным 'type: string', если оно есть у всех рисков)
+  severity: 'low' | 'medium' | 'high';
+  message: string;
+}
+
 export interface AiAnalyticsResult {
   distanceKm: number;
   estimatedHours: number;
-  fuelCostRub: number;
-  riskFactor: 'Низкий' | 'Средний' | 'Высокий';
-  recommendedSpeedKmH: number;
+  optimalSpeedKmh: number;
+  weatherWarning?: string;
+  riskScore: number;
+  fuelConsumptionLitres: number;
+  co2EmissionsKg: number;
+  recommendation: string;
+  activeRisks: ActiveRisk[];
 }
-
 export interface ActiveShipment {
   id: string;
   fromName: string;
