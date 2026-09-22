@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+============================================================================
+ОБЛАСТНОЙ КОНКУРС СТУДЕНЧЕСКИХ ДИЗАЙН-ПРОЕКТОВ В 2026 ГОДУ
+Номинация: Web-дизайн
+Конкурсный проект: Интерактивная логистическая платформа "WB Logistics Tracker"
+============================================================================
 
-## Getting Started
+1. ОБЩИЕ СВЕДЕНИЯ
+----------------------------------------------------------------------------
+Наименование образовательной организации: [Название твоего колледжа]
+ФИО Участника: Баранов Егор Павлович
+ФИО Руководителя: Кондакова Ирина Владимировна
+Ссылка на онлайн-деплой (Production): https://contest-githmen27.vercel.app
 
-First, run the development server:
+2. АННОТАЦИЯ И КОНЦЕПЦИЯ ДИЗАЙН-ПРОЕКТА
+----------------------------------------------------------------------------
+"WB Logistics Tracker" — это концепт современного веб-интерфейса для 
+мониторинга распределительной логистики в режиме реального времени.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Ключевые UX/UI и дизайнерские решения:
+- Dark Mode UI: Футуристичная тёмная цветовая гамма, снижающая нагрузку на 
+  глаза операторов при круглосуточном мониторинге.
+- Интерактивность карт: Отображение геопозиций хабов, анимация маршрутов и 
+  визуализация состояния складов.
+- AI Analytics Card: Интегрированный модуль AI-прогнозирования рисков задержек 
+  доставки, расчёта расхода топлива и выбросов CO2.
+- Адаптивность: Интерактивная верстка на базе Tailwind CSS v4, корректно 
+  отображаемая на desktop, планшетах и мобильных устройствах.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. ТЕХНОЛОГИЧЕСКИЙ СТЕК
+----------------------------------------------------------------------------
+- Фреймворк: Next.js (App Router), React, TypeScript
+- Стилизация: Tailwind CSS v4
+- Картография и маршрутизация: Leaflet.js, OSRM API, CartoDB Dark Tiles
+- База данных: PostgreSQL / Serverless Neon Postgres
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. ТРЕБОВАНИЯ К ПО И ИНСТРУКЦИЯ ПО ЛОКАЛЬНОМУ ЗАПУСКУ
+----------------------------------------------------------------------------
+Для запуска автономной версии или статического экспорта:
+- Браузер с поддержкой HTML5/ES6+ (Google Chrome, Yandex Browser, Edge, Firefox)
+- Node.js version >= 18.0 (для сборки)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Инструкция по разворачиванию:
+1. Распакуйте архив с проектом.
+2. Файл `index.html` является точкой входа для проверки интерфейса в браузере.
+3. Для запуска в режиме разработки:
+   - Выполните `npm install`
+   - Запустите локальный сервер `npm run dev`
+   - Откройте http://localhost:3000 в браузере
 
-## Learn More
+5. БАЗА ДАННЫХ
+----------------------------------------------------------------------------
+Образ (дамп) структуры и демонстрационных данных находится в каталоге:
+`/database/dump.sql`
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Для импорта базы данных откройте СУБД PostgreSQL или MySQL и выполните 
+скрипт `database/dump.sql`.
+============================================================================
